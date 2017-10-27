@@ -5,7 +5,7 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 
 const {ShoppingList, Recipes} = require('./models');
-
+//JSON parser used to parse the JSON data sent by clients
 const jsonParser = bodyParser.json();
 const app = express();
 
@@ -31,8 +31,9 @@ app.get('/shopping-list', (req, res) => {
   res.json(ShoppingList.get());
 });
 
+//jsonParser is a piece of middleware that we supply as a second argument to the router handler below
 app.post('/shopping-list', jsonParser, (req, res) => {
-  // ensure `name` and `budget` are in request body
+  // When client makes a POST request, we VALIDATE the request body ensuring `name` and `budget` are in request body
   const requiredFields = ['name', 'budget'];
   for (let i=0; i<requiredFields.length; i++) {
     const field = requiredFields[i];
@@ -47,11 +48,24 @@ app.post('/shopping-list', jsonParser, (req, res) => {
   res.status(201).json(item);
 });
 
+app.post('/recipes', jsonParser, (req, res) => {
+	const requiredFields = ['name', 'ingredients'];
+	for (let i=0; i<requiredFields.length; i++) {
+		const field = requiredFields[i];
+		if (!(field in req.body)) {
+			const message = `Missing \`${field}\` in request body`
+			console.error(message);
+			return res.status(400).send(message);
+		}
+	}
+	const item = Recipes.create(req.body.name, req.body.ingredients);
+	res.status(201).json(item);
+});
 
 app.get('/recipes', (req, res) => {
   res.json(Recipes.get());
 })
 
-app.listen(process.env.PORT || 8080, () => {
-  console.log(`Your app is listening on port ${process.env.PORT || 8080}`);
+app.listen(process.env.PORT || 9010, () => {
+  console.log(`Your app is listening on port ${process.env.PORT || 9010}`);
 });
